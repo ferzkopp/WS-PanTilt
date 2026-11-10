@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "waveshare-pantilt-cli"
+version = "0.1.0"
+description = "Local UART, OLED, LED, Wi-Fi and native Pi camera tools"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["pyserial>=3.5,<4"]
+
+[project.urls]
+Repository = "https://github.com/ferzkopp/WS-PanTilt"
+Issues = "https://github.com/ferzkopp/WS-PanTilt/issues"
+
+[project.optional-dependencies]
+web = ["Flask>=3.1,<4", "waitress>=3,<4"]
+
+[project.scripts]
+pantilt = "cli:main"
+
+[tool.setuptools]
+py-modules = ["controller", "camera", "cli", "web_server", "configure_pi"]
+packages = ["web_assets"]
+
+[tool.setuptools.package-data]
+web_assets = ["*.html", "*.css", "*.js", "*.ttf", "*-license.txt"]

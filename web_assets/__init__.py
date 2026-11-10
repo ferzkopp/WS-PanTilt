@@ -1,0 +1,1 @@
+"""Locally bundled web interface assets."""

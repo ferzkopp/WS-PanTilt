@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf }}">
+  <title>Pan-Tilt Camera</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/lucide.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark">WAVESHARE <span>DEVICE CONTROL</span></div>
+    <div class="topbar-right"><span id="connection" class="connection">Connecting</span><span id="firmware" class="firmware-label">FW --</span><button id="logout" class="icon-button" title="Sign out" aria-label="Sign out"><i data-lucide="log-out"></i></button></div>
+  </header>
+  <main class="workspace">
+    <div class="page-heading"><h1>Pan-Tilt Camera</h1><span class="mode-label">{% if demo %}Simulation{% else %}OV5647 / GPIO UART{% endif %}</span></div>
+    <div class="control-layout">
+      <section class="camera-section" aria-label="Camera">
+        <div class="section-heading"><h2>Camera</h2><span id="snapshot-time">No snapshot</span></div>
+        <div class="camera-view">
+          <div id="camera-empty" class="camera-empty"><i data-lucide="camera"></i></div>
+          <img id="camera-image" alt="Camera snapshot" hidden>
+        </div>
+        <div class="camera-toolbar"><button id="snapshot" class="primary"><i data-lucide="camera"></i><span>Take Snapshot</span></button><a id="download" class="icon-button" href="/api/image" download="camera.jpg" title="Download snapshot" aria-label="Download snapshot" hidden><i data-lucide="download"></i></a><span id="capture-state" role="status"></span></div>
+        <div class="readouts">
+          <div><span>Measured pan</span><strong id="measured-pan">--</strong></div>
+          <div><span>Measured tilt</span><strong id="measured-tilt">--</strong></div>
+          <div><span>Supply</span><strong id="voltage">--</strong></div>
+        </div>
+      </section>
+      <section class="control-section" aria-label="Pan and tilt controls">
+        <div class="section-heading"><h2>Head Position</h2><button id="stop" class="icon-button danger" title="Stop movement" aria-label="Stop movement"><i data-lucide="square"></i></button></div>
+        <form id="position-form">
+          <div class="axis-control"><div class="field-heading"><label for="pan">Pan</label><div class="numeric-field"><input id="pan-value" aria-label="Pan angle" type="number" min="-180" max="180" step="1" value="0"><span>&deg;</span></div></div><input id="pan" type="range" min="-180" max="180" step="1" value="0"><div class="range-labels"><span>-180&deg;</span><span>0&deg;</span><span>180&deg;</span></div></div>
+          <div class="axis-control"><div class="field-heading"><label for="tilt">Tilt</label><div class="numeric-field"><input id="tilt-value" aria-label="Tilt angle" type="number" min="-30" max="90" step="1" value="0"><span>&deg;</span></div></div><input id="tilt" type="range" min="-30" max="90" step="1" value="0"><div class="range-labels"><span>-30&deg;</span><span>90&deg;</span></div></div>
+          <div class="axis-control"><div class="field-heading"><label for="speed">Speed</label><div class="numeric-field speed-value"><input id="speed-value" aria-label="Movement speed" type="number" min="1" max="360" step="1" value="20"><span>&deg;/s</span></div></div><input id="speed" type="range" min="1" max="360" step="1" value="20"><div class="range-labels"><span>1&deg;/s</span><span>360&deg;/s</span></div></div>
+          <div class="position-actions"><button id="move" type="submit" class="primary"><i data-lucide="move"></i><span>Move</span></button><button id="home" type="button"><i data-lucide="house"></i><span>Home</span></button></div>
+        </form>
+        <div class="commanded"><span>Commanded</span><span>Pan <strong id="commanded-pan">--</strong></span><span>Tilt <strong id="commanded-tilt">--</strong></span></div>
+        <div class="led-section"><div class="field-heading"><h2>Camera LED</h2><label class="switch" title="Camera LED on/off"><input id="led" type="checkbox" aria-label="Camera LED"><span class="switch-track"></span></label></div><div class="brightness-heading"><label for="brightness">Brightness</label><output id="brightness-value">64</output></div><input id="brightness" type="range" min="1" max="255" value="64"></div>
+      </section>
+    </div>
+    <section class="sensors-section" aria-label="Board sensors">
+      <div class="section-heading"><h2>Board Sensors</h2><span id="sensor-time">--</span></div>
+      <table class="sensor-table"><thead><tr><th>Sensor</th><th>X</th><th>Y</th><th>Z</th><th>Unit</th></tr></thead><tbody>
+        <tr><th>AK09918C <span>Magnetic field</span></th><td data-imu="mx" data-precision="0">--</td><td data-imu="my" data-precision="0">--</td><td data-imu="mz" data-precision="0">--</td><td>counts</td></tr>
+        <tr><th>QMI8658 <span>Acceleration</span></th><td data-imu="ax">--</td><td data-imu="ay">--</td><td data-imu="az">--</td><td>mg</td></tr>
+        <tr><th>QMI8658 <span>Angular velocity</span></th><td data-imu="gx">--</td><td data-imu="gy">--</td><td data-imu="gz">--</td><td>&deg;/s</td></tr>
+        <tr><th>Board attitude <span>Roll / Pitch / Yaw</span></th><td data-imu="r">--</td><td data-imu="p">--</td><td data-imu="y">--</td><td>&deg;</td></tr>
+      </tbody></table>
+    </section>
+    <div class="settings-grid">
+      <section class="settings-section" aria-label="OLED controls">
+        <div class="section-heading"><h2>OLED Display</h2></div>
+        <form id="oled-form">
+          <label for="oled-mode">Display mode</label><select id="oled-mode"><option value="follow">Follow Head</option><option value="custom">Custom Text</option><option value="firmware">Firmware Status</option></select>
+          <div class="oled-line"><label for="oled-0">Line 0</label><input id="oled-0" maxlength="21"></div>
+          <div class="oled-line"><label for="oled-1">Line 1</label><input id="oled-1" maxlength="21"></div>
+          <div class="oled-line"><label for="oled-2">Line 2</label><input id="oled-2" maxlength="21"></div>
+          <div class="oled-line"><label for="oled-3">Line 3</label><input id="oled-3" maxlength="21"></div>
+          <button class="primary" type="submit"><i data-lucide="monitor"></i><span>Apply Display</span></button>
+        </form>
+      </section>
+      <section class="settings-section" aria-label="ESP32 access point">
+        <div class="section-heading"><h2>ESP32 Access Point</h2><button id="ap-refresh" class="icon-button" title="Read saved ESP32 AP settings" aria-label="Read saved ESP32 AP settings"><i data-lucide="refresh-cw"></i></button></div>
+        <div class="ap-status"><span>Saved SSID</span><strong id="ap-ssid">Not reported</strong></div>
+        <label for="ap-current-password">Saved password</label><div class="password-row"><input id="ap-current-password" type="password" readonly placeholder="Not reported" autocomplete="off"><button id="ap-reveal" class="icon-button" title="Reveal saved ESP32 AP password" aria-label="Reveal saved ESP32 AP password"><i data-lucide="eye"></i></button></div>
+        <form id="ap-form">
+          <label for="ap-ssid-input">New SSID</label><input id="ap-ssid-input" required maxlength="32" autocomplete="off">
+          <label for="ap-password">New password</label><input id="ap-password" type="password" required minlength="8" maxlength="63" autocomplete="new-password">
+          <label for="ap-password-confirm">Confirm new password</label><input id="ap-password-confirm" type="password" required minlength="8" maxlength="63" autocomplete="new-password">
+          <label class="confirmation"><input id="ap-confirm" type="checkbox">Confirm saved ESP32 AP change</label>
+          <button id="ap-apply" class="primary" type="submit" disabled><i data-lucide="wifi"></i><span>Save Access Point</span></button>
+        </form>
+      </section>
+    </div>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+  </main>
+</body>
+</html>
